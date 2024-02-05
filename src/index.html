@@ -1,11 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GNM</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>GNM</title>
 </head>
 <body>
-    
+	<div class="chat">
+		<div class="messages" id="chat-window"></div>
+
+		<div class="btn-container">
+			<input type="text" class="input-message">
+			<div class="buttons">
+				<button class="audio-btn"></button>
+				<button class="video-btn"></button>
+			</div>
+		</div>
+		
+	</div>
+
+	<div class="popup-container hidden">
+    <div class="popup-title">Что-то пошло не так</div>
+    <p class="error">К сожалению нам не удалось определить ваше местоположениe. Введите координаты вручную.
+			<br><br> Широта и долгота через запятую:		
+		</p>
+		<p class="error-validation hidden">Координаты введены неправильно</p>
+    <input type="text" class="input-field" id="name-field">
+    <button class="cancel-btn">Отмена</button>
+		<button class="action-btn">Продолжить</button>
+  </div>
+	
 </body>
 </html>
