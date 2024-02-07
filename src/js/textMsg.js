@@ -3,11 +3,29 @@ import validate from './validate';
 
 export default class TextMsg {
   constructor(parentElement) {
+    this.parentElement = parentElement;
     this.chatWindow = parentElement.querySelector('.messages');
     this.input = parentElement.querySelector('.input-message');
+    this.saveRecBtn = document.querySelector('.btn-save');
+    this.cancleRecBtn = document.querySelector('.btn-cancle');
+    this.videoStream = document.querySelector('.video-stream');
+    this.timer = document.querySelector('.timer');
+    this.timerFunc = this.timerFunc.bind(this);
+    this.saveRec = this.saveRec.bind(this);
+    this.showBtn = this.showBtn.bind(this);
+    this.blob = null;
+    this.sec = 0;
+    this.min = 0;
+    this.counter = null;
   }
 
   init() {
+    this.audioBtn = this.parentElement.querySelector('.audio-btn');
+    this.videoBtn = this.parentElement.querySelector('.video-btn');
+
+    this.audioBtn.addEventListener('click', this.audioRec);
+    this.videoBtn.addEventListener('click', this.videoRec);
+
     this.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         const newMsg = this.newMsg(this.input.value);
@@ -18,10 +36,9 @@ export default class TextMsg {
     });
   }
 
-  newMsg = (text) => {
+  newMsg = (item, type) => {
     const divMsg = document.createElement('div');
     const divInfo = document.createElement('div');
-    const p = document.createElement('p');
     const spanDate = document.createElement('span');
     const spanGeo = document.createElement('span');
 
@@ -31,9 +48,20 @@ export default class TextMsg {
     spanGeo.classList.add('geo');
 
     spanDate.textContent = currentDay();
-    p.textContent = text;
 
-    divInfo.appendChild(p);
+    if (type === 'audio') {
+      console.log('to be countinued');
+    } else if (type === 'video') {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.src = URL.createObjectURL(item);
+      divInfo.appendChild(video);
+    } else {
+      const p = document.createElement('p');
+      p.textContent = item;
+      divInfo.appendChild(p);
+    }
+
     divInfo.appendChild(spanDate);
 
     divMsg.appendChild(divInfo);
@@ -88,5 +116,109 @@ export default class TextMsg {
 
     document.getElementById('name-field').value = '';
     document.querySelector('.popup-container').classList.toggle('hidden');
+  };
+
+  audioRec = () => {
+    alert('Успел сделать только запись видео))');
+  };
+
+  videoRec = async () => {
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+    } catch {
+      alert('Необходимо разрешение для использования камеры');
+      return;
+    }
+
+    this.showBtn();
+
+    this.videoStream.srcObject = this.stream;
+
+    this.videoStream.addEventListener('canplay', this.videoPlay);
+
+    this.recorder = new MediaRecorder(this.stream);
+    const chunks = [];
+
+    this.recorder.start();
+
+    this.recorder.addEventListener('dataavailable', (ev) => {
+      chunks.push(ev.data);
+    });
+
+    this.recorder.addEventListener('stop', () => {
+      this.blob = new Blob(chunks);
+    });
+
+    this.saveRecBtn.addEventListener('click', this.saveRec);
+
+    this.cancleRecBtn.addEventListener('click', this.cancleRec);
+  };
+
+  showBtn() {
+    this.timer.textContent = '00:00';
+    if (this.timer.classList.contains('hidden')) {
+      this.counter = setInterval(this.timerFunc, 1000);
+    } else {
+      clearInterval(this.counter);
+      this.counter = null;
+      this.sec = 0;
+      this.min = 0;
+    }
+
+    this.videoStream.classList.toggle('hidden');
+
+    this.videoBtn.classList.toggle('hidden');
+    this.audioBtn.classList.toggle('hidden');
+
+    this.saveRecBtn.classList.toggle('hidden');
+    this.cancleRecBtn.classList.toggle('hidden');
+    this.timer.classList.toggle('hidden');
+  }
+
+  saveRec() {
+    this.recorder.stop();
+    this.stream.getTracks().forEach((track) => track.stop());
+
+    setTimeout(() => {
+      const newMsg = this.newMsg(this.blob, 'video');
+
+      this.blob = null;
+      this.chatWindow.append(newMsg);
+      this.chatWindow.lastElementChild.scrollIntoView();
+      this.showBtn();
+      this.videoStream.removeEventListener('canplay', this.videoPlay);
+    }, 0);
+
+    this.saveRecBtn.removeEventListener('click', this.saveRec);
+    this.recorder = null;
+    this.stream = null;
+  }
+
+  cancleRec = () => {
+    this.recorder.stop();
+    this.stream.getTracks().forEach((track) => track.stop());
+    this.blob = null;
+    this.showBtn();
+    this.recorder = null;
+    this.stream = null;
+    this.cancleRecBtn.removeEventListener('click', this.cancleRec);
+    this.videoStream.removeEventListener('canplay', this.videoPlay);
+  };
+
+  timerFunc = () => {
+    this.sec += 1;
+    if (this.sec === 60) {
+      this.min += 1;
+      this.sec = 0;
+    }
+    this.timer.textContent = `${(`0${this.min}`).slice(-2)}:${(`0${this.sec}`).slice(-2)}`;
+  };
+
+  videoPlay = () => {
+    this.videoStream.play();
+    this.videoStream.muted = true;
   };
 }

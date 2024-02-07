@@ -60,6 +60,11 @@ p {
   word-wrap: break-word;
 }
 
+video {
+  max-width: 70%;
+  margin: 10px;
+}
+
 .btn-container {
   position: relative;
 }
@@ -73,9 +78,16 @@ input[type="text"] {
 
 .buttons {
   position: absolute;
-  right: 0;
+  right: 10px;
+  top: 10px;
+  width: 100px;
 
-  top: 10px
+  display: flex;
+}
+
+.timer {
+  margin-top: 10px;
+  margin-left: -10px;
 }
 
 button {
@@ -85,6 +97,22 @@ button {
   border-radius: 50%;
   margin-right: 10px;
   cursor: pointer;
+}
+
+.btn-save {
+  width: 100px;
+  background-color: white;
+  background-image: url('../img/checkmark.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.btn-cancle {
+  width: 100px;
+  background-color: white;
+  background-image: url('../img/x.png');
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 
 .video-btn {
