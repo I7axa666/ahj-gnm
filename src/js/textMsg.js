@@ -9,6 +9,7 @@ export default class TextMsg {
     this.saveRecBtn = document.querySelector('.btn-save');
     this.cancleRecBtn = document.querySelector('.btn-cancle');
     this.videoStream = document.querySelector('.video-stream');
+    this.audioStream = document.querySelector('.audio-stream');
     this.timer = document.querySelector('.timer');
     this.timerFunc = this.timerFunc.bind(this);
     this.saveRec = this.saveRec.bind(this);
@@ -17,6 +18,7 @@ export default class TextMsg {
     this.sec = 0;
     this.min = 0;
     this.counter = null;
+    this.action = null;
   }
 
   init() {
@@ -28,6 +30,7 @@ export default class TextMsg {
 
     this.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
+        this.action = null;
         const newMsg = this.newMsg(this.input.value);
         this.chatWindow.append(newMsg);
         this.input.value = '';
@@ -36,7 +39,7 @@ export default class TextMsg {
     });
   }
 
-  newMsg = (item, type) => {
+  newMsg = (item) => {
     const divMsg = document.createElement('div');
     const divInfo = document.createElement('div');
     const spanDate = document.createElement('span');
@@ -49,9 +52,12 @@ export default class TextMsg {
 
     spanDate.textContent = currentDay();
 
-    if (type === 'audio') {
-      console.log('to be countinued');
-    } else if (type === 'video') {
+    if (this.action === 'audio') {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = URL.createObjectURL(item);
+      divInfo.appendChild(audio);
+    } else if (this.action === 'video') {
       const video = document.createElement('video');
       video.controls = true;
       video.src = URL.createObjectURL(item);
@@ -118,8 +124,39 @@ export default class TextMsg {
     document.querySelector('.popup-container').classList.toggle('hidden');
   };
 
-  audioRec = () => {
-    alert('Успел сделать только запись видео))');
+  audioRec = async () => {
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+      } catch {
+        alert('Необходимо разрешение для использования камеры');
+        return;
+      }
+      this.action = 'audio';
+      // debugger
+      this.showBtn();
+  
+      this.audioStream.srcObject = this.stream;
+  
+      this.audioStream.addEventListener('canplay', this.audioPlay);
+  
+      this.recorder = new MediaRecorder(this.stream);
+      const chunks = [];
+  
+      this.recorder.start();
+  
+      this.recorder.addEventListener('dataavailable', (ev) => {
+        chunks.push(ev.data);
+      });
+  
+      this.recorder.addEventListener('stop', () => {
+        this.blob = new Blob(chunks);
+      });
+  
+      this.saveRecBtn.addEventListener('click', this.saveRec);
+  
+      this.cancleRecBtn.addEventListener('click', this.cancleRec);
   };
 
   videoRec = async () => {
@@ -132,6 +169,8 @@ export default class TextMsg {
       alert('Необходимо разрешение для использования камеры');
       return;
     }
+
+    this.action = 'video';
 
     this.showBtn();
 
@@ -168,7 +207,11 @@ export default class TextMsg {
       this.min = 0;
     }
 
-    this.videoStream.classList.toggle('hidden');
+    if(this.action === 'audio') {
+      this.audioStream.classList.toggle('hidden');
+    } else {
+      this.videoStream.classList.toggle('hidden');
+    } 
 
     this.videoBtn.classList.toggle('hidden');
     this.audioBtn.classList.toggle('hidden');
@@ -183,7 +226,7 @@ export default class TextMsg {
     this.stream.getTracks().forEach((track) => track.stop());
 
     setTimeout(() => {
-      const newMsg = this.newMsg(this.blob, 'video');
+      const newMsg = this.newMsg(this.blob);
 
       this.blob = null;
       this.chatWindow.append(newMsg);
@@ -220,5 +263,10 @@ export default class TextMsg {
   videoPlay = () => {
     this.videoStream.play();
     this.videoStream.muted = true;
+  };
+
+  audioPlay = () => {
+    this.audioStream.play();
+    this.audioStream.muted = true;
   };
 }
